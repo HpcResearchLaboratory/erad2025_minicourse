@@ -1,0 +1,162 @@
+\documentclass{SBCbookchapter}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian,english]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\usepackage[square]{natbib}
+\bibliographystyle{plainnat}
+
+\author{Pablo Alessandro Santos Hugen}
+
+\graphicspath{./images/}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	This meta-paper describes the style to be used in articles and short
+	papers for SBC conferences. For papers in English, you should add just
+	an abstract and for the papers in Portuguese, we also ask for an
+	abstract in Portuguese (``resumo''). In both cases, abstracts should not
+	have more than 10~lines and must be in the first page of the paper.
+\end{abstract}
+
+\begin{resumo}
+	\begin{otherlanguage}{brazilian}
+		Este meta-artigo descreve o estilo a ser usado na confecção de artigos
+		e resumos de artigos para publicação nos anais das conferências
+		organizadas pela SBC. É solicitada a escrita de resumo e abstract apenas
+		para os artigos escritos em português. Artigos em inglês, deverão
+		possuir apenas abstract. Nos dois casos, o autor deve tomar cuidado para
+		que o resumo (e o abstract) não ultrapassem 10~linhas cada, sendo que
+		ambos devem estar na primeira página do artigo.
+	\end{otherlanguage}
+\end{resumo}
+
+\section{Introdução}\label{sec:introducao}
+
+Nos últimos anos, a Computação de Alto Desempenho (\textit{HPC -- High-Performance Computing}) emergiu como uma ferramenta fundamental para resolver problemas em diversos campos, desde a simulação de fenômenos físicos \citep{hong2022mg} at\'e a sua aplicação em  vários subcampos da Inteligencia artificial, como a análise de dados e a aprendizagem de m\'aquina \cite{elsebakhi2015large}. Paralelamente, \cite{barlas2014multicore} reitera que as Unidades de Processamento Gráfico de Proposito Geral (\emph{GPGPUs, General Purpose Graphics Processing Units}) têm desempenhado um papel cada vez mais crítico nesta arena, oferecendo capacidades de processamento massivamente paralelo. Por conseguinte, a complexidade de problemas modernos estão cada vez mais expandindo os limites da computação de alto desempenho. Como exemplo disso, temos o recente uso da aceleração de múltiplas \textit{GPGPUs} no treinamento de Modelos de Linguagem Massivos (\emph{LLM, Large Language Models}), como pode ser visto no trabalho de \citeonline{narayanan2021efficient}, que utiliza técnicas de paralelismo de dados a fim de escalar o treinamento de modelos desse tipo para \emph{clusters} de \textit{GPUs}.
+
+Consoante a isso, a utilização de técnicas refinadas de \textit{HPC} e a utilização de \textit{GPUs} para processamento vem se tornado proeminente no campo de simulações computacionais compartimentais multiagente \citep{kabiri2019parallelisation}. Com isso, \citeonline{Vynnycky2010} citam que estas simulações, que utilizam os chamados Modelos Baseados em Agentes (\textit{ABMs}), são essenciais para modelar dinâmicas complexas, como a propagação de patógenos em populações, permitindo análises detalhadas de cenários epidemiológicos. Eles fazem uso de uma especificação individualizada dos agente -- que são categorizadas em compartimentos, geralmente com base em seu estado de saúde em relação a uma dada doença \cite{alves2006tecnicas} -- e uma análise granular das interações espaço-temporais, incluindo as transições de estado desses agentes, possibilitando uma compreensão mais profunda sobre a disseminação de epidemias e a eficácia de intervenções de saúde pública, incorporando a natureza estocástica dos processos epidêmicos \cite{russel2013inteligencia}.
+
+Além disso, a capacidade de processamento paralelo das \textit{GPUs} proporciona uma melhora significativa no tempo de execução desses modelos, tornando a simulação de grandes populações viável. Trabalhos como o de \citep{holvenstot2014gpgpu} e o de \citeonline{aaby2010efficient} mostram a importância do ajuste de técnicas de \textit{HPC} e \textit{Multi-GPGPU} no que tange a simulações \textit{Multiagente} eficientes computacionalmente. Entretanto, a medida que o número de agentes e a tamanho do ambiente simulado aumenta ainda mais, \textbf{sofremos do problema da escala}, onde o tempo de execução dessas simulações de torna tão inviável, que em um contexto prático são infactíveis. Sendo assim, o uso de técnicas de computação paralela adequadas torna-se imprescindível para garantir a escalabilidade, precisão e a eficiência na modelagem de fenômenos epidemiológicos em larga escala, onde a interação entre milhões de agentes deve ser computacionalmente gerenciável e precisa.
+
+\section{Modelo de computação das GPUs}\label{sec:gpu}
+
+A principal diferença entre \textit{CPUs} e \textit{GPUs} reside em seus objetivos de design. As \textit{CPUs} foram projetadas para executar instruções sequenciais. Para aprimorar o desempenho dessa execução sequencial, diversas funcionalidades foram incorporadas ao design das \textit{CPUs} ao longo dos anos \citep{hennessy1990computer}. O foco tem sido a redução da latência na execução de instruções, de modo que as \textit{CPUs} possam processar uma sequência de instruções o mais rápido possível. Como destacado por \citeonline{hennessy2018new}, isso inclui características como: pipeline de instruções, execução fora de ordem, execução especulativa e caches multinível.
+
+Por outro lado, as \textit{GPUs} foram desenvolvidas visando níveis massivos de paralelismo e alto \textit{throughput}, ainda que isso signifique uma latência média a alta na execução de instruções \citep{owens2007gpu}. Essa direção no design foi influenciada por sua utilização em jogos eletrônicos, gráficos, computação numérica e, mais recentemente, em aprendizado profundo. Todas essas aplicações exigem a realização de uma grande quantidade de cálculos de álgebra linear e computações numéricas em uma velocidade muito elevada, o que levou a um foco significativo no aprimoramento do \textit{throughput} desses dispositivos \cite{owens2007gpu}. Como exemplificado na \autoref{fig_cpu_vs_gpu}, as \textit{CPUs} dedicam uma quantidade significativa de área do chip para recursos que reduzem a latência das instruções, como caches grandes, possuem menos \textit{ULAs} (Unidades Logica e Aritmética) e mais unidades de controle. Em contraste, as \textit{GPUs} utilizam um grande número de \textit{ULAs} para maximizar seu poder de cálculo e taxa de transferência. Eles usam uma quantidade muito pequena da área do chip para caches e unidades de controle, decisão de projeto que aumenta a latência média de instruções nas \textit{GPUs}.
+
+\begin{figure}[!htb]
+	\caption{\label{fig_cpu_vs_gpu}Comparativo arquitetural entre \textit{CPU} (esquerda) e \textit{GPU} (direita) }
+	\begin{center}
+		\includegraphics[scale=0.2]{./images/cpu_gpu_comparsion.png}
+	\end{center}
+	\legend{Fonte: \citep{nvidiaCUDAProgramming}}
+\end{figure}
+
+\subsubsection{Arquitetura do Modelo de Computação}
+
+Portanto, evidencia-se que as \textit{GPUs} são capazes de tolerar altas latências, mantendo um desempenho superior, graças à sua habilidade de combinar um elevado número de \textit{threads}. Embora as instruções individuais possam apresentar altas latências, as \textit{GPUs} têm a habilidade de escalonar as \textit{threads} para execução de forma eficiente, assegurando a utilização constante do poder computacional disponível. Em seu texto, \citep{owens2008gpu} reforça que enquanto determinadas \textit{threads} estão em um estado de espera pelo resultado de uma instrução específica, a \textit{GPU} efetua a transição para a execução de outras \textit{threads} que não estão sujeitas a essa espera. Tal estratégia assegura que as unidades de processamento do \textit{GPU} estejam operando em sua máxima capacidade constantemente, resultando em uma elevada taxa de transferência. Na \autoref{fig_gpu_compute_arch}, é possível observar como as diferentes unidades de processamento dentro de uma \textit{GPU} são organizadas e como operam em paralelo.
+
+\begin{figure}[!htb]
+	\caption{\label{fig_gpu_compute_arch} Arquitetura do Modelo de computação das \textit{GPUs}}
+	\begin{center}
+		\includegraphics[scale=0.3]{./images/gpu_compute_arch.png}
+	\end{center}
+	\legend{Fonte: \citep{nvidiaCUDAProgramming}}
+\end{figure}
+
+
+Internamente, a Unidade de Processamento Gráfico é composta por um conjunto de Multiprocessadores de Fluxo (\textit{SMs, Streaming Multiprocessors}) \citep{owens2007gpu}, com cada \textit{SM} possuindo uma quantidade de memória compartilhada. Esses \textit{SMs} são fundamentais para o desempenho paralelo da \textit{GPU}, permitindo o processamento simultâneo massivo. Por sua vez, \citeonline{wittenbrink2011fermi} esclarecem que cada \emph{SM} é composto por vários núcleos de processamento. Estes núcleos, frequentemente referidos como \textit{threads}, operam de maneira paralela. Importante destacar que dentro de cada \emph{SM}, todas essas \textit{threads} compartilham memória e outros recursos de processamento, facilitando a execução de tarefas paralelas de forma eficiente.
+
+
+\subsubsection{Arquitetura Geral de Mem\'oria}
+\label{subsec:gpu_mem_arch}
+
+Nesse contexto, \citep{mei2016dissecting} citam que as \textit{GPUs} apresentam uma hierarquia complexa de memórias, cada qual com suas funções específicas. Essa hierarquia é crucial para o desempenho desse tipo de acelerador, como ilustrado na \autoref{fig_gpu_mem_arch}, que demonstra a organização da memória em um único \textit{SM} na \textit{GPU}, com os registradores sendo um componente chave nessa arquitetura. Durante a execução, os registradores reservados a uma \textit{thread} são privados, ou seja, inacessíveis a outras \textit{threads} \cite{mei2016dissecting}. A próxima camada consiste nos \textit{caches} de constantes, utilizados para armazenar dados constantes requisitados pelo código executado no \emph{SM}. Para otimizar o uso desses caches, os programadores devem declarar explicitamente os objetos como constantes no código, permitindo que a \textit{GPU} os armazene nesses caches.
+
+
+\begin{figure}[!htb]
+	\caption{\label{fig_gpu_mem_arch} Arquitetura de memoria das \textit{GPUs}}
+	\begin{center}
+		\includegraphics[scale=0.15]{Imagens/Revisaobibliografica/gpu_mem_arch.jpeg}
+	\end{center}
+	\legend{Fonte: \citep{nvidiaCUDAProgramming}}
+\end{figure}
+
+
+Cada \textit{Streaming Multiprocessor} tem uma memória compartilhada (\textit{i.e. scratchpad}), que é uma pequena quantidade de memória \textit{SRAM} programável, rápida e de baixa latência, localizada no chip \citep{owens2007gpu}. Essa memória é ideal para ser usada por um grupo de \textit{threads} que estão rodando no \textit{SM}, ajudando a diminuir operações de carga desnecessárias da memória global e aumentando a eficiência do desempenho do \textit{kernel}. Além disso, essa memória compartilhada ajuda na sincronização entre \textit{threads} dentro de um bloco.
+
+Cada SM também tem um cache L1, usado para armazenar dados que são acessados frequentemente do cache L2. Por sua vez, o cache L2 é compartilhado por todos os SMs \citep{picchi2015impact}, e ajuda a reduzir a latência de acesso à memória global. Com isso, \citeonline{mei2016dissecting} ressaltam que os processos relacionados aos caches \textit{L1} e \textit{L2} são transparentes para o \textit{SM}, ou seja, são percebidos como parte da memória global. Esse mecanismo é semelhante ao funcionamento dos caches \textit{L1}, \textit{L2} e \textit{L3} em \textit{CPUs}.
+
+Por último, as \emph{GPUs} têm uma memória global externa ao chip, como a memória \emph{DRAM} de alta capacidade e largura de banda encontrada, por exemplo, na mais recente arquitetura \textit{hopper} da \emph{Nvidia} \citep{choquette2023nvidia}, encontrada em placas como a \textit{H100}. Apesar da alta latência devido à distância dos SMs, a presença de várias camadas de memória adicionais no chip e um grande número de unidades de computação contribuem para minimizar essa latência.
+
+\subsubsection{Arquitetura de Memória Unificada}
+\label{ssec_gpu_mem_unified}
+
+A Memória Unificada é um espaço único de endereçamento de memória acessível de qualquer processador no sistema. Esta tecnologia permite que aplicações aloquem dados que podem ser lidos ou escritos por códigos executados tanto em \textit{CPUs} quanto em \textit{GPUs} \citep{nvidiaCUDAUnifiedMemory}. Complementarmente, \citeonline{chien2019performance} enfatizam que quando uma rotina acessa dados alocados dessa maneira, o driver \textit{CUDA} e o \textit{hardware} cuidam da migração das páginas de memória para a memória do processador que está acessando de maneira automática.
+
+\begin{figure}[!htb]
+	\caption{\label{fig_gpu_mem_unified} Arquitetura de Memória Unificada CUDA}
+	\begin{center}
+		\includegraphics[scale=0.3]{./images/cuda_unified_mem.png}
+	\end{center}
+	\legend{Fonte: \citep{nvidiaCUDAProgramming}}
+\end{figure}
+
+Essa paginação sob demanda pode ser particularmente benéfica para aplicações que acessam dados com um padrão disperso. Em algumas aplicações, não se sabe de antemão quais endereços de memória específicos um determinado processador irá acessar. Sem suporte a falhas de página no \textit{hardware}, as aplicações só podem pré-carregar arrays inteiros ou sofrer o custo de acessos de alta latência fora do dispositivo (também conhecido como \textit{``Zero Copy''}). Mas as falhas de página significam que apenas as páginas que o \textit{kernel} acessa precisam ser migradas.
+
+
+\section{Modelos de programação paralela em GPUs disponíveis no C++}\label{sec:gpu}
+
+\subsection{Compute Shaders}\label{subsec:compute-shaders}
+
+\subsection{CUDA/HIP}\label{subsec:cuda-hip}
+
+\subsection{OpenCL}\label{subsec:opencl}
+
+\subsection{OpenMP}\label{subsec:openmp}
+
+\subsection{SYCL}\label{subsec:sycl}
+
+\subsection{Bibliotecas de alto nível}\label{subsec:bibliotecas}
+
+\subsection{stdexec}\label{subsec:sdtexec}
+
+
+\section{stdexec: Modelo assíncrono/heterogêneo de execução de tarefas em GPUs}\label{sec:stdexec}
+
+\section{References}
+Bibliographic references must be unambiguous and uniform.  We
+recommend giving the author names references in brackets,
+e.g.~[Knuth~1984], [Kernighan and Ritchie~1990]; or dates in
+parentheses, e.g.~Knuth (1984), Sederberg and Zundel (1989,1990).
+
+
+\bibliography{bibliography}
+
+% you should really use BibTeX instead of this... :-)
+% \begin{thebibliography}{99}
+
+% \bibitem{bou91} Boulic, R. and Renault, O. (1991) ``3D Hierarchies for
+% Animation'', In: New Trends in Animation and Visualization, Edited
+% by Nadia Magnenat-Thalmann and Daniel Thalmann, John Wiley \& Sons
+% ltd., England.
+%
+% \bibitem{dye95} Dyer, S., Martin, J. and Zulauf, J. (1995) ``Motion
+% Capture White Paper'',
+% http://reality.sgi.com/employees/jam\_sb/mocap/MoCapWP\_v2.0.html,
+% December.
+%
+% \bibitem{hol95} Holton, M. and Alexander, S. (1995) ``Soft Cellular
+% Modeling: A Technique for the Simulation of Non-rigid Materials'',
+% Computer Graphics: Developments in Virtual Environments, R. A.
+% Earnshaw and J. A. Vince, England, Academic Press Ltd., p.~449-460.
+%
+% \bibitem{knu84} Knuth, D. E., The TeXbook, Addison Wesley, 1984.
+% \end{thebibliography}
+
+\end{document}
