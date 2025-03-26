@@ -48,31 +48,18 @@
 \maketitle
 
 \begin{abstract}
-	This meta-paper describes the style to be used in articles and short
-	papers for SBC conferences. For papers in English, you should add just
-	an abstract and for the papers in Portuguese, we also ask for an
-	abstract in Portuguese (``resumo''). In both cases, abstracts should not
-	have more than 10~lines and must be in the first page of the paper.
+	Heterogeneous parallel programming has become an essential approach in the field of \emph{HPC}, especially with the growing use of \emph{GPGPUs}. In this context, the \emph{C++} programming language plays a central role. However, the diversity and complexity of the available models and tools present a significant barrier for beginners in the field. Therefore, the goal of this minicourse is to provide an overview of the main tools and parallel programming models for \textit{GPUs} in \emph{C++}, highlighting their characteristics, peculiarities, and applicability.
 \end{abstract}
 
 \begin{resumo}
-	\begin{otherlanguage}{brazilian}
-		Este meta-artigo descreve o estilo a ser usado na confecção de artigos
-		e resumos de artigos para publicação nos anais das conferências
-		organizadas pela SBC. É solicitada a escrita de resumo e abstract apenas
-		para os artigos escritos em português. Artigos em inglês, deverão
-		possuir apenas abstract. Nos dois casos, o autor deve tomar cuidado para
-		que o resumo (e o abstract) não ultrapassem 10~linhas cada, sendo que
-		ambos devem estar na primeira página do artigo.
-	\end{otherlanguage}
+	A programação paralela heterogênea tem se consolidado como uma abordagem essencial na área de \emph{HPC}, especialmente com o uso crescente de \emph{GPGPUs}. Nesse cenário, a linguagem de programação \emph{C++} desempenha um papel central. Contudo, a diversidade e a complexidade dos modelos e ferramentas disponíveis representam uma barreira significativa para iniciantes na área. Assim, o objetivo deste minicurso é fornecer uma visão geral das principais ferramentas e modelos de programação paralela para \textit{GPUs} em \emph{C++}, destacando suas características, peculiaridades e aplicabilidades.
 \end{resumo}
 
 \section{Introdução}\label{sec:introducao}
 
 Nos últimos anos, a Computação de Alto Desempenho (\textit{HPC -- High-Performance Computing}) emergiu como uma ferramenta fundamental para a resolução de problemas em diversos campos, desde a simulação de fenômenos físicos \citep{hong2022mg} até sua aplicação em vários subcampos da Inteligência Artificial, como a análise de dados e a aprendizagem de máquina \citep{elsebakhi2015large}. Paralelamente, \citet{barlas2014multicore} reitera que as Unidades de Processamento Gráfico de Propósito Geral (\emph{GPGPUs, General Purpose Graphics Processing Units}) têm desempenhado um papel cada vez mais crítico nessa área, oferecendo capacidades de processamento massivamente paralelo. Consequentemente, a complexidade dos problemas modernos tem expandido continuamente os limites da computação de alto desempenho. Como exemplo, destaca-se o uso recente da aceleração de múltiplas \textit{GPGPUs} no treinamento de Modelos de Linguagem Massivos (\emph{LLMs, Large Language Models}), que utiliza técnicas de paralelismo de dados para escalar o treinamento desses modelos em \emph{clusters} de \textit{GPUs}.
 
-Nesse contexto, a linguagem de programação C++ desempenha um papel central no desenvolvimento de aplicações para HPC, oferecendo um equilíbrio entre abstração de alto nível e controle eficiente sobre os recursos de hardware. Especialmente no caso das \emph{GPUs}, a linguagem serviu como base para a criação de todo o ecossistema de programação paralela para esses aceleradores. Assim, o objetivo deste minicurso é apresentar os principais modelos de programação paralela em \emph{GPUs} disponíveis para C++, com destaque para o modelo assíncrono e heterogêneo \textbf{stdexec}. A Seção 1.2 explica brevemente o modelo de computação das \emph{GPUs}; a Seção 1.3 enumera as alternativas em C++ para programação desses aceleradores; e, por fim, a Seção 1.4 concentra-se no modelo mais recente, o \emph{stdexec}.
-
+Nesse contexto, a linguagem de programação C++ desempenha um papel central no desenvolvimento de aplicações para HPC, oferecendo um equilíbrio entre abstração de alto nível e controle eficiente sobre os recursos de hardware. Especialmente no caso das \emph{GPUs}, a linguagem serviu como base para a criação de todo o ecossistema de programação paralela para esses aceleradores. Assim, o objetivo deste minicurso é apresentar os principais modelos de programação paralela em \emph{GPUs} disponíveis na linguagem. A Seção 1.2 explica brevemente o modelo de computação das \emph{GPUs} e a Seção 1.3 enumera as alternativas em C++ para programação desses aceleradores.
 
 \section{Modelo de computação das GPUs}\label{sec:gpu}
 
@@ -110,18 +97,18 @@ A Memória Unificada permite que \textit{CPUs} e \textit{GPUs} acessem um mesmo e
 
 As \textit{GPUs}, inicialmente projetadas para processamento gráfico, evoluíram para se tornar componentes essenciais em diversas aplicações computacionais. Esse avanço acelerado gerou um ecossistema fragmentado, repleto de modelos de programação paralela, compiladores e ferramentas, cada um oferecendo diferentes níveis de abstração e otimização.
 
-Nesse contexto, a linguagem \emph{C++} se firmou como a principal escolha para o desenvolvimento em \textit{GPUs}, fornecendo suporte a uma ampla gama de modelos de programação paralela. Sua combinação de flexibilidade e alto desempenho possibilitou a criação de APIs e frameworks que vão desde abordagens de baixo nível, como \textit{Compute Shaders} e CUDA, até soluções mais portáveis e genéricas, como OpenCL, OpenMP e SYCL. Essa diversidade reflete a necessidade de equilibrar controle granular sobre o hardware com portabilidade e facilidade de uso, permitindo atender a diferentes domínios computacionais. As próximas seções exploram esses modelos em detalhes, destacando suas características, vantagens e casos de uso.
+Nesse contexto, a linguagem \emph{C++} se firmou como a principal escolha para o desenvolvimento em \textit{GPUs}, fornecendo suporte a uma ampla gama de modelos de programação paralela. Sua combinação de flexibilidade e alto desempenho possibilitou a criação de APIs e frameworks que vão desde abordagens de baixo nível, como \textit{Compute Shaders} e CUDA, até soluções mais portáveis e genéricas, como OpenCL, OpenMP e SYCL. Essa diversidade reflete a necessidade de equilibrar controle granular sobre o hardware com portabilidade e facilidade de uso, permitindo atender a diferentes domínios computacionais. As próximas seções exploram esses modelos em detalhes.
 
 \subsection{Compute Shaders}\label{subsec:compute-shaders}
 
-Os \textit{shaders} são pequenos programas executados diretamente na \textit{GPU}, projetados para processar e manipular dados em estágios específicos do \emph{pipeline gráfico}. Os \emph{vertex shaders} transformam as coordenadas de vértices em um espaço tridimensional, enquanto os \emph{fragment shaders} determinam a cor, textura e iluminação de cada pixel antes da renderização final. No entanto, o \emph{pipeline} gráfico tradicional nem sempre é suficiente para atender a demandas computacionais que vão além da renderização, como simulações físicas e processamento de grandes volumes de dados. Para suprir essa necessidade, \emph{APIs} gráficas modernas introduziram os \emph{Compute Shaders}, que operam fora do \emph{pipeline} e permitem a execução de cálculos arbitrários diretamente na \textit{GPU} usando a mesma \emph{API} gráfica. A introdução desse tipo de shader possibilitou o uso da \textit{GPU} para tarefas gerais, expandindo suas aplicações para além da renderização gráfica. A Figura \ref{fig_gpu_pipeline} ilustra a estrutura do \emph{pipeline} gráfico do \emph{OpenGL} e a integração dos \emph{compute shaders} em diferentes estágios.
+Os \textit{shaders} são pequenos programas executados diretamente na \textit{GPU}, projetados para processar e manipular dados em estágios específicos do \emph{pipeline gráfico}. Os \emph{vertex shaders} transformam as coordenadas de vértices em um espaço tridimensional, enquanto os \emph{fragment shaders} determinam a cor, textura e iluminação de cada pixel antes da renderização final. No entanto, o \emph{pipeline} gráfico tradicional nem sempre é suficiente para atender a demandas computacionais que vão além da renderização, como simulações físicas e processamento de grandes volumes de dados. Para suprir essa necessidade, \emph{APIs} gráficas modernas introduziram os \emph{Compute Shaders}, que operam fora do \emph{pipeline} e permitem a execução de cálculos arbitrários diretamente na \textit{GPU} usando a mesma \emph{API} gráfica. A introdução desse tipo de \emph{shader} possibilitou o uso da \textit{GPU} para tarefas gerais, expandindo suas aplicações para além da renderização gráfica. A Figura \ref{fig_gpu_pipeline} ilustra a estrutura do \emph{pipeline} gráfico do \emph{OpenGL} e a integração dos \emph{compute shaders} em diferentes estágios.
 
 \begin{figure}[!htb]
 	\centerline{\includegraphics[scale=0.3]{./images/gpu_pipeline.png}}
 	\caption{\label{fig_gpu_pipeline} Estrutura do \emph{pipeline} gráfico e \emph{compute shaders}. Fonte: \citep{opengl2012bof}}
 \end{figure}
 
-No \emph{OpenGL}, os \emph{compute shaders} diferem dos demais por não terem entradas ou saídas fixas, exigindo que busquem e armazenem dados manualmente (em texturas, images ou \emph{uniforms}). Eles operam divididos em \emph{work groups}, definidos pelo usuário na execução. Cada grupo contém várias invocações do shader (definidas pelo \emph{local size}) que podem se comunicar entre si, mas não com outros grupos. Como a ordem de processamento é indefinida, não há garantia de sequência fixa. Essa estrutura é ideal para tarefas como processamento de imagens, onde cada grupo lida paralelamente com regiões da imagem. Para executar um \emph{compute shader} em C++, é necessário ativá-lo com \texttt{glUseProgram} ou \texttt{glBindProgramPipeline} e então despachar a computação com \texttt{glDispatchCompute}. Esse comando define quantos \emph{work groups} serão executados nas três dimensões. Também é possível despachar a computação de forma indireta, lendo os valores do número de grupos a partir de um \emph{Buffer Object}, usando \texttt{glDispatchComputeIndirect}.
+No \emph{OpenGL}, os \emph{compute shaders} diferem dos demais por não terem entradas ou saídas fixas, exigindo que busquem e armazenem dados manualmente (em texturas, images ou \emph{uniforms}). Eles operam divididos em \emph{work groups}, definidos pelo usuário na execução. Cada grupo contém várias invocações do \emph{shader} (definidas pelo \emph{local size}) que podem se comunicar entre si, mas não com outros grupos. Como a ordem de processamento é indefinida, não há garantia de sequência fixa. Essa estrutura é ideal para tarefas como processamento de imagens, onde cada grupo lida paralelamente com regiões da imagem. Para executar um \emph{compute shader} em C++, é necessário ativá-lo com \texttt{glUseProgram} ou \texttt{glBindProgramPipeline} e então despachar a computação com \texttt{glDispatchCompute}. Esse comando define quantos \emph{work groups} serão executados nas três dimensões. Também é possível despachar a computação de forma indireta, lendo os valores do número de grupos a partir de um \emph{Buffer Object}, usando \texttt{glDispatchComputeIndirect}.
 
 
 \begin{listing}[!htb]
@@ -151,9 +138,9 @@ Todo o runtime \emph{CUDA} exposto pelo compilador é baseado em uma \emph{API} d
 
 O OpenMP (\emph{Open Multi-Processing}) é uma \emph{API} para programação paralela em sistemas de memória compartilhada, como \emph{multi-core CPUs}. Por meio de diretivas de compilador (\emph{pragmas}), ele facilita a paralelização de loops e seções de código com mínima modificação no código sequencial, permitindo distribuir o trabalho entre múltiplas \emph{threads}. Além disso, o OpenMP simplifica o acesso à memória compartilhada, um desafio comum em outros ambientes, onde pode levar a \emph{data races} e problemas semelhantes. Versões recentes também introduziram suporte para offloading para GPUs e outros aceleradores, expandindo suas capacidades além das \emph{CPUs}.
 
-Inicialmente desenvolvido pela empresas \emph{Portland Group (PG)}, \emph{Cray} e \emph{NVIDIA}, o OpenACC (\emph{Open Accelerators}), assim como o OpenMP, utiliza diretivas de compilador para paralelizar o código, mas é focado em aceleração com GPUs e outros dispositivos especializados. Com o OpenACC, os desenvolvedores podem facilmente transferir trechos de código e para diferentes tipos de aceleradores, aproveitando as especialidades e poder de computação paralela de cada um deles. Embora também ofereça uma abordagem de alto nível, o OpenACC é especialmente voltado para quem deseja acelerar aplicações sem precisar se aprofundar em conceitos de muito baixo nível.
+Inicialmente desenvolvido pela empresas \emph{Portland Group (PG)}, \emph{Cray} e \emph{NVIDIA}, o OpenACC (\emph{Open Accelerators}), assim como o OpenMP, utiliza diretivas de compilador para paralelizar o código, mas é focado em aceleração com \emph{GPUs} e outros dispositivos especializados. Com o OpenACC, os desenvolvedores podem facilmente transferir trechos de código e para diferentes tipos de aceleradores, aproveitando as especialidades e poder de computação paralela de cada um deles. Embora também ofereça uma abordagem de alto nível, o OpenACC é especialmente voltado para quem deseja acelerar aplicações sem precisar se aprofundar em conceitos de muito baixo nível.
 
-Apesar de ambas as especificações definirem uma \emph{API} declarativa de alto nível baseada em diretivas de compilação, o OpenACC foi projetado desde o início para plataformas heterogêneas, como GPUs e outros aceleradores, enquanto o OpenMP passou a suportar esses dispositivos apenas a partir da versão 4. Também, o \emph{OpenACC} foca em fornecer computação de alto desempenho de maneira simples e abstraída, especialmente para a comunidade científica. A seguir, o código mostra a soma de arrays paralela utilizando OpenMP e OpenACC.
+Apesar de ambas as especificações definirem uma \emph{API} declarativa baseada em diretivas de compilação, o OpenACC foi projetado desde o início para plataformas heterogêneas, como \emph{GPUs} e outros aceleradores, enquanto o OpenMP passou a suportar esses dispositivos apenas a partir da versão 4. Também, o \emph{OpenACC} foca em fornecer computação de alto desempenho de maneira simples e abstraída, especialmente para a comunidade científica. A seguir, o código mostra a soma de arrays paralela utilizando \emph{OpenMP} e \emph{OpenACC}.
 
 \begin{listing}[!htb]
 	\inputminted{cpp}{./code/vecadd_oacc.cpp}
@@ -167,12 +154,35 @@ Ambos os códigos são compilados com compiladores comuns como o \emph{GCC} e o \e
 
 \subsection{OpenCL}\label{subsec:opencl}
 
-A Open Computing Language (\emph{OpenCL}) é uma especificação aberta para programação paralela heterogênea, permitindo a execução de código em \emph{CPUs}, \emph{GPUs}, \emph{DSPs}, \emph{FPGAs} e outros aceleradores. Desenvolvida para alta performance, a \emph{API} oferece portabilidade entre diferentes arquiteturas de hardware e é amplamente utilizada em aplicações que exigem processamento massivo de dados, como simulações científicas e processamento de imagens. Por meio dessa \emph{API}, é possível delegar trechos do código mais intensivos em computação para dispositivos de aceleração adequados.
+A Open Computing Language (\emph{OpenCL}) é uma especificação aberta para programação paralela heterogênea desenvolvida pela \emph{Khronos Group}, permitindo a execução de código em \emph{CPUs}, \emph{GPUs}, e vários outros aceleradores. Desenvolvida para alta performance, a \emph{API} oferece portabilidade e controle de baixo nível entre diferentes arquiteturas de hardware e é amplamente utilizada em aplicações que exigem processamento massivo de dados, como simulações científicas e processamento de imagens. O Código \ref{cod:opencl} ilustra o controle de baixo nível ao implementar um kernel para a redução de arrays em \emph{OpenCL}.
+
+\begin{listing}[!htb]
+	\inputminted{cpp}{./code/sum_opencl.cpp}
+	\caption{\label{cod:opencl} Kernel de redução (soma) de arrays para \emph{OpenCL}.}
+\end{listing}
+
+O objetivo dessa \emph{API} é fornecer uma camada de abstração próxima ao hardware, suficientemente flexível para ser utilizada tanto no desenvolvimento direto quanto como destino de compilação por compiladores e \emph{frameworks} de mais alto nível. A Figura \ref{fig:opencl_env} ilustra a importância dessa \emph{API} como destino de \emph{frameworks} como o \emph{SYCL} ou até mesmo como alvo de compiladores como o \emph{clang}, por meio da representação intermediária \emph{SPIR}.
+
+\begin{figure}[!htb]
+	\centerline{\includegraphics[scale=0.25]{./images/opencl_env.png}}
+	\caption{\label{fig:opencl_env} Ecossistema do \emph{OpenCL}. Fonte: \citep{khronos_opencl}.}
+\end{figure}
 
 
 \subsection{SYCL}\label{subsec:sycl}
 
-\subsection{std::exec}\label{subsec:sdtexec}
+Também desenvolvida pelo \emph{Khronos Group}, o \emph{SYCL} é uma especificação multi-plataforma focada na abstração de algoritmos em diferentes tipos de aceleradores, com alta expressividade com mínima modificação no código. Delegar parte do código para aceleradores específicos é comum na computação de alto desempenho, mas exige conhecimento de bibliotecas e modelos de programação específicos para cada hardware. O \emph{SYCL} resolve isso ao fornecer uma abstração comum para a programação heterogênea, maximizando a conformidade com o padrão \emph{C++}. Sua popularidade resultou no surgimento de implementações como \textbf{Open SYCL}, \textbf{neoSYCL}, \textbf{triSYCL} e \textbf{Intel\textsuperscript{\textregistered} oneAPI tools}.
+
+Essas implementações são na maioria das vezes compatíveis, mas variam em recursos devido a diferenças no desenvolvimento e foco arquitetural, porém todas suportam \emph{CPUs} populares. O Código \ref{cod:sycl} mostra um exemplo de adição de arrays paralelo em \emph{GPU} usando o \emph{SYCL} (implementação \emph{oneAPI}). O uso de \emph{filas} de trabalho e \emph{seletores de dispositivo} deixa o códio genérico ao ponto de, se mudarmos o seletor para \texttt{cpu\_selector\_v} ou \texttt{fpga\_selector\_v}  a função executará no respectivo dispositivo (não necessáriamente com o mesmo desempenho, levando em conta as características de cada um).
+
+\begin{listing}[!htb]
+	\inputminted{cpp}{./code/vecadd_sycl.cpp}
+	\caption{\label{cod:sycl} Exemplo de adição de arrays paralelo usando \emph{SYCL}.}
+\end{listing}
+
+O \emph{SYCL} vem evoluindo com a intenção de influenciar a direção do \emph{ISO C++} em torno da computação heterogênea, criando pontos de prova e features que podem ser considerados no contexto da evolução e adoção na linguagem.
+
+\subsection{std::exec: Execução de tarefas assíncronas/heterogêneas diretamente no C++ }\label{sec:stdexec}
 
 A maturidade do \emph{C++} no ecossistema de \textit{HPC} levou ao desenvolvimento de modelos de programação paralela de alto nível diretamente baseados na linguagem, reduzindo o tempo e o esforço necessários para manter e implantar aplicações, ao mesmo tempo em que garante portabilidade e desempenho com uma única base de código \citep{deakin2020evaluating}. Esses modelos têm como objetivo possibilitar a programação paralela heterogênea com desempenho próximo ao nativo \citep{breyer2022comparison}.
 
@@ -183,8 +193,14 @@ O padrão \textit{C++17} introduziu algoritmos paralelos síncronos (bloqueantes) 
 	\caption{\label{cod:stdexec} Exemplo de execução assíncrona com \textbf{std::exec}.}
 \end{listing}
 
+Nas abordagens tradicionais de programação paralela e concorrente, utiliza-se threads para paralelismo e primitivas de sincronização (como variáveis atômicas e \emph{mutexes}) para evitar interações incorretas, como \emph{race conditions} e \emph{deadlocks}. Podemos pensar nesse modelo como ``desestruturado'', onde é difícil ter um raciocínio local sobre uma tarefa, pois é preciso considerar o programa como um todo para determinar a sincronização necessária. Com isso, esse \emph{framework} adota o conceito de concorrência estruturada, onde um programa pode ser decomposto em tarefas independentes, executadas concorrentemente e coordenadas de forma assíncrona, abstraindo a programação paralela heterogênea dentro de um mesmo conjunto de abstrações. A Figura \ref{fig:senders} ilustra os principais conceitos disponíveis no \emph{framework}.
 
-\section{std::exec: Execução de tarefas assíncronas/heterogêneas no C++ }\label{sec:stdexec}
+\begin{figure}[!htb]
+	\centerline{\includegraphics[scale=0.3]{./images/sender.png}}
+	\caption{\label{fig:senders} Framework \emph{std::exec}. Fonte: \citep{cor3ntin2019executors}}
+\end{figure}
+
+Um \emph{sender} é uma entidade que descreve uma tarefa concorrente. Essa tarefa possui um único ponto de entrada e um ponto de saída, com três possíveis resultados de finalização: sucesso (com retorno de um valor), erro (exceção) ou cancelamento (sem retorno). Os schedulers abstraem o local de execução dessas tarefas, possibilitando que sejam realizadas em \emph{CPUs}, \emph{GPUs} ou outros dispositivos, otimizando o uso dos recursos disponíveis. Por fim, os receivers são responsáveis por capturar o resultado de um sender e processá-lo conforme o tipo de conclusão. Com esses blocos de construção, é possível desenvolver programas paralelos e concorrentes de forma estruturada, clara e eficiente. A implementação atual do \emph{framewrk} é fornecida pela \emph{NVIDIA} no compilador \emph{nvc++}, parte do \emph{NVIDIA HPC SDK}. Ela inclui \emph{schedulers} otimizados para as suas \emph{GPUs} proprietárias, inclusive com suporte a \emph{multi-GPUs}.
 
 \bibliography{bibliography}
 
