@@ -12,6 +12,7 @@
 
 \usepackage{minted}
 \usepackage{caption}
+
 \captionsetup[listing]{
     justification=centering,
     singlelinecheck=off,
@@ -43,6 +44,7 @@
 }
 
 \author{Pablo Alessandro Santos Hugen}
+\title{Programação de Alto Desempenho em GPUs com C++}
 
 \begin{document}
 \maketitle
@@ -108,7 +110,7 @@ Os \textit{shaders} são pequenos programas executados diretamente na \textit{GPU
 	\caption{\label{fig_gpu_pipeline} Estrutura do \emph{pipeline} gráfico e \emph{compute shaders}. Fonte: \citep{opengl2012bof}}
 \end{figure}
 
-No \emph{OpenGL}, os \emph{compute shaders} diferem dos demais por não terem entradas ou saídas fixas, exigindo que busquem e armazenem dados manualmente (em texturas, images ou \emph{uniforms}). Eles operam divididos em \emph{work groups}, definidos pelo usuário na execução. Cada grupo contém várias invocações do \emph{shader} (definidas pelo \emph{local size}) que podem se comunicar entre si, mas não com outros grupos. Como a ordem de processamento é indefinida, não há garantia de sequência fixa. Essa estrutura é ideal para tarefas como processamento de imagens, onde cada grupo lida paralelamente com regiões da imagem. Para executar um \emph{compute shader} em C++, é necessário ativá-lo com \texttt{glUseProgram} ou \texttt{glBindProgramPipeline} e então despachar a computação com \texttt{glDispatchCompute}. Esse comando define quantos \emph{work groups} serão executados nas três dimensões. Também é possível despachar a computação de forma indireta, lendo os valores do número de grupos a partir de um \emph{Buffer Object}, usando \texttt{glDispatchComputeIndirect}.
+No \emph{OpenGL}, os \emph{compute shaders} diferem dos demais por não terem entradas ou saídas fixas, exigindo que busquem e armazenem dados manualmente (em texturas, images ou \emph{uniforms}). Eles operam divididos em \emph{work groups}, definidos pelo usuário na execução. Cada grupo contém várias invocações do \emph{shader} (definidas pelo \emph{local size}) que podem se comunicar entre si, mas não com outros grupos. Como a ordem de processamento é indefinida, não há garantia de sequência fixa. Essa estrutura é ideal para tarefas como processamento de imagens, onde cada grupo lida paralelamente com regiões da imagem (como demonstrado no Código~\ref{lst_compute_shader}). Para executar um \emph{compute shader} em C++, é necessário ativá-lo com \texttt{glUseProgram} ou \texttt{glBindProgramPipeline} e então despachar a computação com \texttt{glDispatchCompute}. Esse comando define quantos \emph{work groups} serão executados nas três dimensões. Também é possível despachar a computação de forma indireta, lendo os valores do número de grupos a partir de um \emph{Buffer Object}, usando \texttt{glDispatchComputeIndirect}.
 
 
 \begin{listing}[!htb]
@@ -119,11 +121,11 @@ No \emph{OpenGL}, os \emph{compute shaders} diferem dos demais por não terem ent
 
 \subsection{CUDA e HIP}\label{subsec:cuda-hip}
 
-Lançada pela \emph{NVIDIA} em novembro de 2006, \emph{CUDA (Compute Unified Device Architecture)} é uma plataforma de computação paralela que permite o uso de suas \emph{GPUs} da para processamento geral. Ela fornece uma API baseada em C/C++ para que desenvolvedores possam escrever programas que executem de forma massivamente paralela, aproveitando milhares de núcleos disponíveis nas GPUs modernas. Já o \emph{HIP (Heterogeneous-Compute Interface for Portability)}, é a solução equivalente da \emph{AMD}, que além de permitir a programação de \emph{GPUs} da própria \emph{AMD}, também fornece uma camada de compatibilidade para código \emph{CUDA}, facilitando a portabilidade entre os dois fornecedores de \emph{hardware}.
+Lançada pela \emph{NVIDIA} em novembro de 2006, \emph{CUDA (Compute Unified Device Architecture)} é uma plataforma de computação paralela que permite o uso de suas \emph{GPUs} para processamento geral. Ela fornece uma API baseada em C/C++ para que desenvolvedores possam escrever programas que executem de forma massivamente paralela, aproveitando milhares de núcleos disponíveis nas GPUs modernas. Já o \emph{HIP (Heterogeneous-Compute Interface for Portability)}, é a solução equivalente da \emph{AMD}, que além de permitir a programação de \emph{GPUs} da própria \emph{AMD}, também fornece uma camada de compatibilidade para código \emph{CUDA}, facilitando a portabilidade entre os dois fornecedores de \emph{hardware}.
 
 Essas \emph{APIs} são baseadas em \emph{kernels} (código executado na \emph{GPU}), que são funções chamadas pelo código \emph{host} (código executado na \emph{CPU}) e executadas $N$ vezes em paralelo por $N$ diferentes \emph{threads CUDA}. Um \emph{kernel} é definido usando o especificador de declaração $\_\_global\_\_$, e o número de \emph{threads} que o executam para uma determinada chamada é especificado por meio de uma sintaxe específica ($<<<...>>>$). Cada \emph{thread} recebe um \emph{ID} único, acessível dentro do próprio \emph{kernel}.
 
-Como discutido anteriormente na Seção \ref{sec:gpu}, o conceito de \emph{hierarquia de threads e memória} na arquitetura das \emph{GPUs} é essencial para obter um bom desempenho na execução de \emph{kernels}. No Código \ref{cod:kernel}, podemos observar a organização das \emph{threads} em blocos e sua indexação dentro da \emph{grid} de execução. Cada bloco de \emph{threads} é identificado por um índice \emph{(blockIdx.x e blockIdx.y)}, enquanto cada \emph{thread} dentro do bloco possui um índice local \emph{(threadIdx.x e threadIdx.y)}, permitindo calcular sua posição global na grade ao combiná-los com o tamanho do bloco \emph{(blockDim.x e blockDim.y)}.
+Como discutido anteriormente na Seção \ref{sec:gpu}, o conceito de \emph{hierarquia de threads e memória} na arquitetura das \emph{GPUs} é essencial para obter um bom desempenho na execução de \emph{kernels}. O Código~\ref{cod:kernel} exemplifica um \emph{kernel} simples de adição de matrizes em \emph{CUDA}. Nele, podemos observar a organização das \emph{threads} em blocos e sua indexação dentro da \emph{grid} de execução. Cada bloco de \emph{threads} é identificado por um índice \emph{(blockIdx.x e blockIdx.y)}, enquanto cada \emph{thread} dentro do bloco possui um índice local \emph{(threadIdx.x e threadIdx.y)}, permitindo calcular sua posição global na grade ao combiná-los com o tamanho do bloco \emph{(blockDim.x e blockDim.y)}.
 
 \begin{listing}[!htb]
 	\inputminted{cuda}{./code/matadd.cu}
@@ -132,7 +134,7 @@ Como discutido anteriormente na Seção \ref{sec:gpu}, o conceito de \emph{hierarq
 
 O \emph{nvcc} é o compilador \emph{CUDA} proprietário da \emph{NVIDIA} responsável por traduzir código-fonte contendo \emph{kernels} em código executável para a \emph{GPU}. Ele separa o código \emph{host} do código \emph{device}, compilando o código \emph{device} para \emph{PTX} ou \emph{cubin} e modificando o código \emph{host} para gerenciar as chamadas aos \emph{kernels}. A compilação pode ser feita de forma \emph{offline}, gerando código binário antecipadamente, ou \emph{just-in-time}, onde o código \emph{PTX} é compilado pelo driver durante a execução da aplicação, garantindo compatibilidade com novas arquiteturas. O uso do \emph{nvcc} simplifica esse processo, fornecendo uma interface unificada para a compilação e a geração de código otimizado para \emph{GPUs}.
 
-Todo o runtime \emph{CUDA} exposto pelo compilador é baseado em uma \emph{API} de baixo nível escrita em C, que também pode ser acessada pela aplicação. Essa interface oferece um controle adicional ao expor conceitos como \emph{contextos}, semelhantes a processos do sistema operacional -- e \emph{módulos}, que funcionam como bibliotecas carregadas dinamicamente no dispositivo. A maioria das aplicações não utiliza essa \emph{API} de baixo nível, pois não necessita dessa quantidade extra de controle, o que deixa o código mais simples.
+Todo o runtime \emph{CUDA} exposto pelo compilador é baseado em uma \emph{API} de baixo nível escrita em C, que também pode ser acessada pela aplicação. Essa interface oferece um controle adicional ao expor conceitos como \emph{contextos}, semelhantes a processos do sistema operacional, e \emph{módulos}, que funcionam como bibliotecas carregadas dinamicamente no dispositivo. A maioria das aplicações não utiliza essa \emph{API} de baixo nível, pois não necessita dessa quantidade extra de controle, o que deixa o código mais simples.
 
 \subsection{OpenMP e OpenACC}\label{subsec:openmp}
 
@@ -140,7 +142,7 @@ O OpenMP (\emph{Open Multi-Processing}) é uma \emph{API} para programação parale
 
 Inicialmente desenvolvido pela empresas \emph{Portland Group (PG)}, \emph{Cray} e \emph{NVIDIA}, o OpenACC (\emph{Open Accelerators}), assim como o OpenMP, utiliza diretivas de compilador para paralelizar o código, mas é focado em aceleração com \emph{GPUs} e outros dispositivos especializados. Com o OpenACC, os desenvolvedores podem facilmente transferir trechos de código e para diferentes tipos de aceleradores, aproveitando as especialidades e poder de computação paralela de cada um deles. Embora também ofereça uma abordagem de alto nível, o OpenACC é especialmente voltado para quem deseja acelerar aplicações sem precisar se aprofundar em conceitos de muito baixo nível.
 
-Apesar de ambas as especificações definirem uma \emph{API} declarativa baseada em diretivas de compilação, o OpenACC foi projetado desde o início para plataformas heterogêneas, como \emph{GPUs} e outros aceleradores, enquanto o OpenMP passou a suportar esses dispositivos apenas a partir da versão 4. Também, o \emph{OpenACC} foca em fornecer computação de alto desempenho de maneira simples e abstraída, especialmente para a comunidade científica. A seguir, o código mostra a soma de arrays paralela utilizando \emph{OpenMP} e \emph{OpenACC}.
+Apesar de ambas as especificações definirem uma \emph{API} declarativa baseada em diretivas de compilação, o OpenACC foi projetado desde o início para plataformas heterogêneas, como \emph{GPUs} e outros aceleradores, enquanto o OpenMP passou a suportar esses dispositivos apenas a partir da versão 4. Também, o \emph{OpenACC} foca em fornecer computação de alto desempenho de maneira simples e abstraída, especialmente para a comunidade científica. A seguir, o Código~\ref{cod:openmpacc} mostra a soma de arrays paralela utilizando \emph{OpenACC} e \emph{OpenMP}.
 
 \begin{listing}[!htb]
 	\inputminted{cpp}{./code/vecadd_oacc.cpp}
@@ -148,13 +150,12 @@ Apesar de ambas as especificações definirem uma \emph{API} declarativa baseada e
 	\caption{\label{cod:openmpacc} Exemplo de adição de arrays paralelo usando \emph{OpenMP} e \emph{OpenACC}.}
 \end{listing}
 
-Ambos os códigos são compilados com compiladores comuns como o \emph{GCC} e o \emph{Clang}, utilizando as flags específicas: \texttt{-fopenmp} e \texttt{-fopenacc}, respectivamente.
-
+Ambos os códigos são compilados com compiladores comuns como o \emph{GCC} e o \emph{Clang}, utilizando as flags específicas: \texttt{-fopenacc} e \texttt{-fopenmp}, respectivamente.
 
 
 \subsection{OpenCL}\label{subsec:opencl}
 
-A Open Computing Language (\emph{OpenCL}) é uma especificação aberta para programação paralela heterogênea desenvolvida pela \emph{Khronos Group}, permitindo a execução de código em \emph{CPUs}, \emph{GPUs}, e vários outros aceleradores. Desenvolvida para alta performance, a \emph{API} oferece portabilidade e controle de baixo nível entre diferentes arquiteturas de hardware e é amplamente utilizada em aplicações que exigem processamento massivo de dados, como simulações científicas e processamento de imagens. O Código \ref{cod:opencl} ilustra o controle de baixo nível ao implementar um kernel para a redução de arrays em \emph{OpenCL}.
+A Open Computing Language (\emph{OpenCL}) é uma especificação aberta para programação paralela heterogênea desenvolvida pela \emph{Khronos Group}, permitindo a execução de código em \emph{CPUs}, \emph{GPUs}, e vários outros aceleradores. Desenvolvida para alto desempenho, a \emph{API} oferece portabilidade e controle de baixo nível entre diferentes arquiteturas de hardware e é amplamente utilizada em aplicações que exigem processamento massivo de dados, como simulações científicas e processamento de imagens. O Código \ref{cod:opencl} ilustra o controle de baixo nível ao implementar um kernel para a redução de arrays em \emph{OpenCL}.
 
 \begin{listing}[!htb]
 	\inputminted{cpp}{./code/sum_opencl.cpp}
@@ -186,14 +187,12 @@ O \emph{SYCL} vem evoluindo com a intenção de influenciar a direção do \emph{ISO
 
 A maturidade do \emph{C++} no ecossistema de \textit{HPC} levou ao desenvolvimento de modelos de programação paralela de alto nível diretamente baseados na linguagem, reduzindo o tempo e o esforço necessários para manter e implantar aplicações, ao mesmo tempo em que garante portabilidade e desempenho com uma única base de código \citep{deakin2020evaluating}. Esses modelos têm como objetivo possibilitar a programação paralela heterogênea com desempenho próximo ao nativo \citep{breyer2022comparison}.
 
-O padrão \textit{C++17} introduziu algoritmos paralelos síncronos (bloqueantes) na biblioteca padrão de \emph{C++}, com suporte para \textit{CPUs} multi-core e \textit{GPUs} com desempenho competitivo \citep{lin2022evaluating}. Esse modelo é inerentemente síncrono, bloqueando a execução do programa até que as tarefas paralelas sejam concluídas, limitando o paralelismo concorrente \citep{lin2022evaluating}. Para resolver isso, os esforços estão focados no desenvolvimento do modelo de programação paralela assíncrona (não bloqueante) \textbf{std::exec} para o próximo padrão \textit{C++26}, facilitando a execução assíncrona flexível e eficiente de tarefas usando abstrações como \textit{senders}, \textit{receivers} e \textit{schedulers} \citep{Dominiak2024}.
+O padrão \textit{C++17} introduziu algoritmos paralelos síncronos (bloqueantes) na biblioteca padrão de \emph{C++}, com suporte para \textit{CPUs} multi-core e \textit{GPUs} com desempenho competitivo \citep{lin2022evaluating}. Esse modelo é inerentemente síncrono, bloqueando a execução do programa até que as tarefas paralelas sejam concluídas, limitando o paralelismo concorrente \citep{lin2022evaluating}. Para resolver isso, os esforços estão focados no desenvolvimento do modelo de programação paralela assíncrona (não bloqueante) \textbf{std::exec} para o próximo padrão \textit{C++26}, facilitando a execução assíncrona flexível e eficiente de tarefas usando abstrações como \textit{senders}, \textit{receivers} e \textit{schedulers} \citep{Dominiak2024}. Um exemplo de execução assíncrona nesse modelo pode ser visto no Código~\ref{cod:stdexec}.
 
-\begin{listing}[!htb]
-	\inputminted{cpp}{./code/stdexec_simple.cpp}
-	\caption{\label{cod:stdexec} Exemplo de execução assíncrona com \textbf{std::exec}.}
-\end{listing}
+\begin{listing}[!htb] \inputminted{cpp}{./code/stdexec_simple.cpp} \caption{\label{cod:stdexec} Exemplo de execução assíncrona com \textbf{std::exec}.} \end{listing}
 
 Nas abordagens tradicionais de programação paralela e concorrente, utiliza-se threads para paralelismo e primitivas de sincronização (como variáveis atômicas e \emph{mutexes}) para evitar interações incorretas, como \emph{race conditions} e \emph{deadlocks}. Podemos pensar nesse modelo como ``desestruturado'', onde é difícil ter um raciocínio local sobre uma tarefa, pois é preciso considerar o programa como um todo para determinar a sincronização necessária. Com isso, esse \emph{framework} adota o conceito de concorrência estruturada, onde um programa pode ser decomposto em tarefas independentes, executadas concorrentemente e coordenadas de forma assíncrona, abstraindo a programação paralela heterogênea dentro de um mesmo conjunto de abstrações. A Figura \ref{fig:senders} ilustra os principais conceitos disponíveis no \emph{framework}.
+
 
 \begin{figure}[!htb]
 	\centerline{\includegraphics[scale=0.3]{./images/sender.png}}
@@ -201,6 +200,12 @@ Nas abordagens tradicionais de programação paralela e concorrente, utiliza-se th
 \end{figure}
 
 Um \emph{sender} é uma entidade que descreve uma tarefa concorrente. Essa tarefa possui um único ponto de entrada e um ponto de saída, com três possíveis resultados de finalização: sucesso (com retorno de um valor), erro (exceção) ou cancelamento (sem retorno). Os schedulers abstraem o local de execução dessas tarefas, possibilitando que sejam realizadas em \emph{CPUs}, \emph{GPUs} ou outros dispositivos, otimizando o uso dos recursos disponíveis. Por fim, os receivers são responsáveis por capturar o resultado de um sender e processá-lo conforme o tipo de conclusão. Com esses blocos de construção, é possível desenvolver programas paralelos e concorrentes de forma estruturada, clara e eficiente. A implementação atual do \emph{framewrk} é fornecida pela \emph{NVIDIA} no compilador \emph{nvc++}, parte do \emph{NVIDIA HPC SDK}. Ela inclui \emph{schedulers} otimizados para as suas \emph{GPUs} proprietárias, inclusive com suporte a \emph{multi-GPUs}.
+
+\section{Considerações finais}
+
+A programação paralela em \emph{GPUs} com \emph{C++} é essencial para o desenvolvimento de aplicações de alto desempenho que aproveitem o máximo do hardware moderno, mas requer o domínio de diversos modelos e ferramentas. Este minicurso apresentou as principais abordagens, desde \emph{APIs} de baixo nível, como \emph{CUDA} e \emph{OpenCL}, até soluções mais portáveis, como \emph{SYCL} e \emph{OpenMP}. Cada modelo tem suas vantagens e desafios, permitindo a escolha mais adequada para cada caso de uso específico. Com esse conhecimento, espera-se que os participantes adquiram uma base sólida sobre as alternativas para explorar e desenvolver aplicações eficientes em \emph{GPUs}. Para aprofundar o entendimento sobre o tema, recomenda-se a leitura do clássico trabalho de \citet{barlas2014multicore} e das outras referências citadas, além das páginas de comunidade e documentação das ferramentas apresentadas.
+
+
 
 \bibliography{bibliography}
 
